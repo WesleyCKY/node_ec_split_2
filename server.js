@@ -1,4 +1,5 @@
 const express = require('express');
+const path = require('path');
 const mysql = require('mysql2');
 const bodyParser = require('body-parser');
 const config = require('./config');
@@ -9,6 +10,7 @@ const PORT = process.env.PORT || 3000;
 
 // Middleware to parse JSON bodies
 app.use(bodyParser.json());
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Create a MySQL connection
 const connection = mysql.createConnection({
@@ -26,6 +28,10 @@ connection.connect(err => {
         return;
     }
     console.log('Connected to the MySQL database');
+});
+
+app.get('/', async(req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // Endpoint to get all names

@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>飯局分帳系統</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    h1 {
+      text-align: center;
+      padding: 20px;
+      background-color: #007BFF;
+      color: white;
+      margin: 0;
+    }
+    .container {
+      max-width: 600px;
+      margin: 20px auto;
+      padding: 10px;
+    }
+    .input-group {
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    input, select, button {
+      width: calc(100% - 20px);
+      padding: 10px;
+      margin: 10px 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 16px;
+    }
+    button {
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    table, th, td {
+      border: 1px solid #ccc;
+    }
+    th, td {
+      padding: 10px;
+      text-align: left;
+      font-size: 14px;
+    }
+    .summary {
+      margin-top: 20px;
+    }
+    .message {
+      margin: 10px 10px 20px;
+      padding: 10px;
+      border-radius: 5px;
+      display: none;
+      font-size: 14px;
+    }
+    .success {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    .error {
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    .paid {
+      color: green;
+      font-weight: bold;
+    }
+    .unpaid {
+      color: red;
+      font-weight: bold;
+    }
+
+    /* Mobile responsive */
+    @media (max-width: 768px) {
+      body {
+        font-size: 14px;
+      }
+      input, select, button {
+        font-size: 14px;
+      }
+      h1 {
+        font-size: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>飯局分帳系統</h1>
+  <div class="container">
+    <div class="message" id="message-box"></div>
+    <div class="input-group">
+      <label for="participants">輸入參與者（用逗號分隔）:</label>
+      <input type="text" id="participants" placeholder="例如: 小明, 小紅, 小強">
+      <button onclick="addParticipants()">加入參與者</button>
+    </div>
+    <div id="payer-input" class="input-group" style="display: none;">
+      <label for="payer">選擇先墊付款人:</label>
+      <select id="payer"></select>
+      <label for="total-amount">輸入總金額:</label>
+      <input type="number" id="total-amount" placeholder="例如: 500" min="0" step="0.01">
+      <button onclick="setupPayment()">設置付款</button>
+    </div>
+    <div id="payment-inputs" class="input-group" style="display: none;">
+      <h2>輸入每個人應該支付的金額：</h2>
+      <div id="payment-list"></div>
+      <button onclick="finalizePayment()">完成記錄</button>
+    </div>
+    <div id="status-section" class="summary" style="display: none;">
+      <h2>分帳狀態</h2>
+      <table id="results">
+        <thead>
+          <tr>
+            <th>姓名</th>
+            <th>應付金額</th>
+            <th>支付狀態</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+        </tbody>
+      </table>
+      <h3 id="balance-status"></h3>
+    </div>
+  </div>
+
+  <script>
+    let participants = [];
+    let payments = {};
+    let totalAmount = 0;
+    let payer = "";
+
+    // 顯示訊息
+    function showMessage(message, type = "success") {
+      const messageBox = document.getElementById("message-box");
+      messageBox.textContent = message;
+      messageBox.className = `message ${type}`;
+      messageBox.style.display = "block";
+      setTimeout(() => {
+        messageBox.style.display = "none";
+      }, 3000);
+    }
+
+    // 加入參與者
+    function addParticipants() {
+      const apiUrl = 'localhost:3000/names'; // Replace with your API endpoint
+
+      fetch(apiUrl)
+          .then(response => {
+              if (!response.ok) {
+                  throw new Error('Network response was not ok');
+              }
+              return response.json();
+          })
+          .then(data => {
+              // Extract names from the API data
+              const participants = data.map(participant => participant.name);
+              
+              // Clear existing options in the payer select
+              const payerSelect = document.getElementById("payer");
+              payerSelect.innerHTML = "";
+
+              // Populate the payer select with new participants
+              participants.forEach(participant => {
+                  const option = document.createElement("option");
+                  option.value = participant;
+                  option.textContent = participant;
+                  payerSelect.appendChild(option);
+              });
+
+              // Show payer input
+              document.getElementById("payer-input").style.display = "block";
+              showMessage("參與者已加入！");
+          })
+          .catch(error => {
+              console.error('There was a problem with the fetch operation:', error);
+              showMessage("無法獲取參與者資料！", "error");
+          });
+    }
+
+    // 設置付款
+    function setupPayment() {
+      payer = document.getElementById("payer").value;
+      totalAmount = parseFloat(document.getElementById("total-amount").value);
+
+      if (!payer || isNaN(totalAmount) || totalAmount <= 0) {
+        showMessage("請確認付款人及總金額！", "error");
+        return;
+      }
+
+      const paymentList = document.getElementById("payment-list");
+      paymentList.innerHTML = "";
+      participants.forEach(participant => {
+        const div = document.createElement("div");
+        div.innerHTML = `
+          <label>${participant} 的應付金額:</label>
+          <input type="number" id="payment-${participant}" placeholder="輸入金額" min="0" step="0.01">
+        `;
+        paymentList.appendChild(div);
+      });
+
+      document.getElementById("payment-inputs").style.display = "block";
+      showMessage("請輸入每位參與者的應付金額！");
+    }
+
+    // 完成記錄
+    function finalizePayment() {
+      let totalAssigned = 0;
+
+      participants.forEach(participant => {
+        const paymentInput = document.getElementById(`payment-${participant}`);
+        const amount = parseFloat(paymentInput.value) || 0;
+        payments[participant] = {
+          amount,
+          paid: participant === payer ? amount : 0, // 先墊款人默認已支付
+        };
+        totalAssigned += amount;
+      });
+
+      if (Math.abs(totalAssigned - totalAmount) > 0.01) {
+        showMessage(`分配的金額總和 (${totalAssigned}) 與總金額 (${totalAmount}) 不匹配！請檢查數據。`, "error");
+        return;
+      }
+
+      document.getElementById("status-section").style.display = "block";
+      displayResults();
+      showMessage("分帳記錄已完成！");
+    }
+
+    // 顯示結果
+    function displayResults() {
+      const resultsTable = document.getElementById("results").querySelector("tbody");
+      resultsTable.innerHTML = "";
+
+      participants.forEach(participant => {
+        const row = document.createElement("tr");
+        const nameCell = document.createElement("td");
+        const amountCell = document.createElement("td");
+        const statusCell = document.createElement("td");
+        const actionCell = document.createElement("td");
+
+        const payment = payments[participant];
+        const balance = payment.amount - payment.paid;
+
+        nameCell.textContent = participant;
+        amountCell.textContent = `$${payment.amount.toFixed(2)}`;
+        statusCell.innerHTML = balance === 0
+          ? `<span class="paid">已支付</span>`
+          : `<span class="unpaid">未支付：$${balance.toFixed(2)}</span>`;
+
+        if (balance > 0) {
+          actionCell.innerHTML = `<button onclick="markAsPaid('${participant}')">標記已支付</button>`;
+        } else {
+          actionCell.textContent = "-";
+        }
+
+        row.appendChild(nameCell);
+        row.appendChild(amountCell);
+        row.appendChild(statusCell);
+        row.appendChild(actionCell);
+        resultsTable.appendChild(row);
+      });
+
+      checkBalance();
+    }
+
+    // 標記某人已支付
+    function markAsPaid(participant) {
+      payments[participant].paid = payments[participant].amount;
+      displayResults();
+      showMessage(`${participant} 已完成支付！`);
+    }
+
+    // 檢查整體平衡
+    function checkBalance() {
+      const totalPaid = Object.values(payments).reduce((sum, payment) => sum + payment.paid, 0);
+      const balanceStatus = document.getElementById("balance-status");
+      if (Math.abs(totalPaid - totalAmount) < 0.01) {
+        balanceStatus.textContent = "所有金額已平衡！";
+        balanceStatus.style.color = "green";
+      } else {
+        balanceStatus.textContent = `金額不平衡！差額：$${(totalAmount - totalPaid).toFixed(2)}`;
+        balanceStatus.style.color = "red";
+      }
+    }
+  </script>
+</body>
+</html>
