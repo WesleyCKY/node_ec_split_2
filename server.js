@@ -36,7 +36,7 @@ app.get('/', async(req, res) => {
 
 // Endpoint to get all names
 app.get('/names', (req, res) => {
-    connection.query('SELECT * FROM nameList', (err, results) => {
+    connection.query('SELECT * FROM nameList ORDER BY name;', (err, results) => {
         if (err) {
             return res.status(500).json({ error: 'Database query failed' });
         }

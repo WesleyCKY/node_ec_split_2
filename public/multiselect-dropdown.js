@@ -92,7 +92,7 @@ style.innerHTML = `
 .multiselect-dropdown-list div:hover{
   background-color: #ced4da;
 }
-.multiselect-dropdown span.maxselected {width:95%;}
+.multiselect-dropdown span.maxselected {width:95%; height: 95%%;}
 .multiselect-dropdown-all-selector {border-bottom:solid 1px #999;}
 `;
 document.head.appendChild(style);
