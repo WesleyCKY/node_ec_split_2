@@ -3,7 +3,7 @@ style.setAttribute("id","multiselect_dropdown_styles");
 style.innerHTML = `
 .multiselect-dropdown{
   width: 93%;
-  font-size: 14px;
+  font-size: 16px;
   height: 1.75rem;
   margin: 10px 10px;
   display: block;
@@ -31,7 +31,7 @@ style.innerHTML = `
 .multiselect-dropdown span.optext .optdel {
   float: right;
   margin: 0 -6px 1px 5px;
-  font-size: 0.7em;
+  font-size: 16em;
   margin-top: 2px;
   cursor: pointer;
   color: #666;

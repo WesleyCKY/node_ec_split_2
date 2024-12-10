@@ -68,7 +68,7 @@ th,
 td {
     padding: 10px;
     text-align: left;
-    font-size: 14px;
+    font-size: 16px;
 }
 
 .summary {
@@ -80,7 +80,7 @@ td {
     padding: 10px;
     border-radius: 5px;
     display: none;
-    font-size: 14px;
+    font-size: 16px;
 }
 
 .success {
@@ -108,13 +108,13 @@ td {
 /* Mobile responsive */
 @media (max-width: 768px) {
     body {
-        font-size: 14px;
+        font-size: 16px;
     }
 
     input,
     select,
     button {
-        font-size: 14px;
+        font-size: 16px;
     }
 
     h1 {
