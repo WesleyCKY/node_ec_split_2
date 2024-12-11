@@ -4,18 +4,7 @@ let participants = [];
 let payments = {};
 let totalAmount = 0;
 let payer = "";
-
-// 顯示訊息
-function showMessage(message, type = "success") {
-    const messageBox = document.getElementById("message-box");
-    messageBox.textContent = message;
-    messageBox.className = `message ${type}`;
-    messageBox.style.display = "block";
-    setTimeout(() => {
-        messageBox.style.display = "none";
-    }, 3000);
-}
-
+    
 // 加入參與者
 function addParticipants() {
     const apiUrl = '/names'; // Replace with your API endpoint
@@ -57,11 +46,6 @@ function addParticipants() {
             console.error('There was a problem with the fetch operation:', error);
             showMessage("無法獲取參與者資料！", "error");
         });
-}
-
-function msOnchange(selectedOptions) {
-    console.log(Array.from(selectedOptions).map(x=>x.value??x.text))
-    participants = Array.from(selectedOptions).map(x=>x.value??x.text)
 }
 
 // 設置付款
@@ -175,4 +159,5 @@ function checkBalance() {
     }
 }
 
-window.onload = addParticipants;
+
+

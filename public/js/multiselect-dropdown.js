@@ -213,14 +213,12 @@ function MultiselectDropdown(options){
     search.addEventListener('input',()=>{
       list.querySelectorAll(":scope div:not(.multiselect-dropdown-all-selector)").forEach(d=>{
         var txt=d.querySelector("label").innerText.toUpperCase();
-        d.style.display=txt.includes(search.value.toUpperCase())?'block':'none';
+        d.style.display=txt.includes(search.value.toUpperCase())?'flex':'none';
       });
     });
 
     div.addEventListener('click',()=>{
       div.listEl.style.display='block';
-      search.focus();
-      search.select();
     });
     
     document.addEventListener('click', function(event) {

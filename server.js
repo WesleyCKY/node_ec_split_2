@@ -4,11 +4,9 @@ const mysql = require('mysql2');
 const bodyParser = require('body-parser');
 const config = require('./config');
 
-// Create an express application
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware to parse JSON bodies
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -31,6 +29,13 @@ connection.connect(err => {
 });
 
 app.get('/', async(req, res) => {
+    const currentDate = new Date();
+
+    const day = currentDate.getDate(), 
+          month = currentDate.getMonth() + 1,
+          year = currentDate.getFullYear(); 
+    
+    console.log(`${day}/${month}/${year}`, 'new access to index.html');
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
@@ -45,11 +50,10 @@ app.get('/names', (req, res) => {
 });
 
 // Endpoint to create a new name
-app.post('/names', (req, res) => {
-    const { name } = req.body;
-
+app.post('/names/create', (req, res) => {
+    console.log('create req: ', req.body)
     // Check for duplicates
-    connection.query('SELECT * FROM nameList WHERE name = ?', [name], (err, results) => {
+    connection.query('SELECT * FROM nameList WHERE name = ?', [req.body['name']], (err, results) => {
         if (err) {
             return res.status(500).json({ error: 'Database query failed' });
         }
@@ -58,7 +62,7 @@ app.post('/names', (req, res) => {
         }
 
         // Insert new name
-        connection.query('INSERT INTO nameList (name) VALUES (?)', [name], (err, results) => {
+        connection.query('INSERT INTO nameList (name) VALUES (?)', [req.body['name']], (err, results) => {
             if (err) {
                 return res.status(500).json({ error: 'Failed to insert name' });
             }
@@ -69,16 +73,15 @@ app.post('/names', (req, res) => {
 
 // Endpoint to delete a name
 app.post('/names/delete', (req, res) => {
-    const { name_to_be_deleted } = req.body;
-
-    connection.query('DELETE FROM nameList WHERE name = ?', [name_to_be_deleted], (err, results) => {
+    console.log('delete req: ', req.body)
+    connection.query('DELETE FROM nameList WHERE id = ?', [req.body['id']], (err, results) => {
         if (err) {
-            return res.status(500).json({ error: 'Failed to delete name' });
+            return res.status(500).json({ error: 'Oh, Something wrong...(500)' });
         }
         if (results.affectedRows === 0) {
-            return res.status(404).json({ error: 'Name not found' });
+            return res.status(404).json({ error: 'Hey, 用家不存在' });
         }
-        res.json({ message: 'Name deleted successfully' });
+        res.json({ message: '得咗！用家已被刪除' });
     });
 });
 

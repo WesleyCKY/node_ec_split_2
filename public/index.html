@@ -1,62 +1,128 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, user-scalable=no" />
-  <link rel="stylesheet" href="style.css">
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-p34f1UUtsS3wqzfto5wAAmdvj+osOnFyQFpp4Ua3gs/ZVWx6oOypYoCJhGGScy+8" crossorigin="anonymous"></script>
-  <script src="multiselect-dropdown.js" ></script>
-  <script type="text/javascript" src="logic.js"></script>
-  <script>
-    // document.addEventListener('gesturestart', function (e) {
-    //   e.preventDefault();
-    // });
-  </script>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/style.css">
+  <script type="text/javascript" src="js/multiselect-dropdown.js"></script>
+  <script type="text/javascript" src="js/displayController.js"></script>
+  <script type="text/javascript" src="js/billController.js"></script>
+  <script type="text/javascript" src="js/tableController.js"></script>
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>飯局分帳系統</title>
 </head>
+
 <body>
-  <h1>飯局分帳系統</h1>
-  <div class="container">
+
+  <div class="topnav">
+    <a href="/index.html" class="active">飯局分帳系統</a>
+    <div id="myLinks">
+      <a href="" onclick="showBill()">分賬</a>
+      <a href="" onclick="showAdmin()">參與者名單</a>
+    </div>
+    <a href="javascript:void(0);" class="icon" onclick="toggleNav()">
+      <i class="fa fa-bars"></i>
+    </a>
+  </div>
+  <div class="container" id="master">
     <div class="message" id="message-box"></div>
-    <!-- <button class="btn btn-light" onclick="ms.innerHTML='<option value=1>New option 1</option><option selected value=2>New option 2</option><option value=3>New option 3</option>';ms.loadOptions()">Load new options</button> -->
-    <div id="participants-input" class="input-group" style="display: block; width: 100%;">
-      <label for="ms">選擇參與者</label>
-      <select class="input-group" id="ms" name="ms"
-              multiple multiselect-search="true" 
-              multiselect-select-all="true"
-              multiselect-hide-x="true"
-              onchange="msOnchange(this.selectedOptions)">
-      </select>
+    <div class="container" id="bill" style="display: none;">
+      <h2>添加分賬</h2>
+      <div id="participants-input" class="input-group" style="display: block; width: 100%;">
+        <label for="ms">選擇參與者</label>
+        <select class="input-group" id="ms" name="ms" multiple multiselect-search="true" multiselect-select-all="true"
+          multiselect-hide-x="true" onchange="msOnchange(this.selectedOptions)">
+        </select>
+      </div>
+      <div id="payer-input" class="input-group" style="display: none;">
+        <label for="payer">選擇先墊付款人:</label>
+        <select id="payer"></select>
+        <label for="total-amount" style="margin-top: 20px;">輸入總金額:</label>
+        <input type="number" id="total-amount" style="width: 91%" placeholder="例如: 500" min="0" step="0.01">
+        <button onclick="setupPayment()">設置付款</button>
+      </div>
+      <div id="payment-inputs" class="input-group" style="display: none;">
+        <h2>輸入每個人應該支付的金額：</h2>
+        <div id="payment-list"></div>
+        <button onclick="finalizePayment()">完成記錄</button>
+      </div>
+      <div id="status-section" class="summary" style="display: none;">
+        <h2>分帳狀態</h2>
+        <table id="results">
+          <thead>
+            <tr>
+              <th>姓名</th>
+              <th>應付金額</th>
+              <th>支付狀態</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+          </tbody>
+        </table>
+        <h3 id="balance-status"></h3>
+      </div>
     </div>
-    <div id="payer-input" class="input-group" style="display: none;">
-      <label for="payer">選擇先墊付款人:</label>
-      <select id="payer"></select>
-      <label for="total-amount" style="margin-top: 20px;">輸入總金額:</label>
-      <input type="number" id="total-amount" style="width: 91%" placeholder="例如: 500" min="0" step="0.01">
-      <button onclick="setupPayment()">設置付款</button>
-    </div>
-    <div id="payment-inputs" class="input-group" style="display: none;">
-      <h2>輸入每個人應該支付的金額：</h2>
-      <div id="payment-list"></div>
-      <button onclick="finalizePayment()">完成記錄</button>
-    </div>
-    <div id="status-section" class="summary" style="display: none;">
-      <h2>分帳狀態</h2>
-      <table id="results">
-        <thead>
-          <tr>
-            <th>姓名</th>
-            <th>應付金額</th>
-            <th>支付狀態</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody>
-        </tbody>
-      </table>
-      <h3 id="balance-status"></h3>
+
+    <div class="container" class="summary" id="admin" style="display: none;">
+      <div id="status-section" class="summary" style="display: block;">
+        <h2>用家列表</h2>
+        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#nameModal">
+          添加使用者
+        </button>
+        <table id="adminTable">
+          <thead>
+            <tr>
+              <th>姓名</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+          </tbody>
+        </table>
+        <h3 id="updateStatus"></h3>
+      </div>
     </div>
   </div>
+  <!-- Modal -->
+  <div class="modal fade" id="nameModal" tabindex="-1" role="dialog" aria-labelledby="nameModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header" style="width: 100%;">
+          <h2 class="modal-title" id="nameModalLabel">Initial係咩先？</h5>
+            <button type="button" class="close" style="width: 20%;" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        <div class="modal-body">
+          <form id="nameForm">
+            <div class="form-group">
+              <label for="nameInput">Initial或者名字</label>
+              <input type="text" class="form-control" id="nameInput" placeholder="輸入新的initial/name" required>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">離開</button>
+          <button type="button" class="btn btn-primary" onclick="submitCreate()">添加</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
+
 </html>
