@@ -58,43 +58,6 @@ async function fetchUsers() {
     }
 }
 
-// Function to confirm delete action
-async function confirmDelete(userId) {
-    if (confirm('真的要删除此用户嗎?')) {
-        await deleteUser(userId);
-    }   
-}
-
-// Function to delete a user
-async function deleteUser(userId) {
-    try {
-        const response = await fetch(`/names/delete`, {
-            method: 'POST',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-              },
-            body: JSON.stringify({'id': userId})
-        });
-        const result = await response.json();
-
-        if (result) {
-            console.log(result.message)
-            // Remove the user from the table
-            await fetchUsers().then(() => showMessage(result['message']));; // Refresh the list
-        } 
-        else {
-            console.error('Error deleting user:', result.statusText);
-            showMessage(result.statusText);
-            document.getElementById('updateStatus').innerText = 'Error deleting user.';
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        document.getElementById('updateStatus').innerText = 'Error deleting user.';
-    } 
-}
-
-
 // show nav items
 function toggleNav() {
     var x = document.getElementById("myLinks");

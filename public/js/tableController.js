@@ -1,3 +1,38 @@
+// Function to confirm delete action
+async function confirmDelete(userId) {
+    if (confirm('真的要删除此用户嗎?')) {
+        await deleteUser(userId);
+    }   
+}
+
+// Function to delete a user
+async function deleteUser(userId) {
+    try {
+        const response = await fetch(`/names/delete`, {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+              },
+            body: JSON.stringify({'id': userId})
+        });
+        const result = await response.json();
+
+        if (result) {
+            console.log(result.message)
+            await reloadUser(result)
+        } 
+        else {
+            console.error('Error deleting user:', result.statusText);
+            showMessage(result.statusText);
+            document.getElementById('updateStatus').innerText = 'Error deleting user.';
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('updateStatus').innerText = 'Error deleting user.';
+    } 
+}
+
 async function submitCreate() {
     const nameInput = document.getElementById('nameInput').value;
 
@@ -28,8 +63,7 @@ async function createUser(name) {
 
         if (result) {
             console.log(result.message)
-            // Remove the user from the table
-            await fetchUsers().then(() => showMessage(result['message']));; // Refresh the list
+            await reloadUser(result)
         } 
         else {
             console.error('Error creating user:', result.statusText);
@@ -46,4 +80,14 @@ async function confirmCreate(userName) {
     if (confirm(`真的要添加此用户(${userName})嗎?`)) {
         await createUser(userName);
     }   
+}
+
+async function reloadUser(result){
+    await fetchUsers().then(() => {
+        if (result.message) {
+            showMessage(result['message'])
+        } else {
+            result['error']
+        } 
+    })
 }
