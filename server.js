@@ -41,7 +41,7 @@ app.get('/', async(req, res) => {
 
 // Endpoint to get all names
 app.get('/names', (req, res) => {
-    connection.query('SELECT * FROM nameList ORDER BY name;', (err, results) => {
+    connection.query('SELECT * FROM Members ORDER BY name;', (err, results) => {
         if (err) {
             return res.status(500).json({ error: 'Database query failed' });
         }
@@ -53,7 +53,7 @@ app.get('/names', (req, res) => {
 app.post('/names/create', (req, res) => {
     console.log('create req: ', req.body)
     // Check for duplicates
-    connection.query('SELECT * FROM nameList WHERE name = ?', [req.body['name']], (err, results) => {
+    connection.query('SELECT * FROM Members WHERE name = ?', [req.body['name']], (err, results) => {
         if (err) {
             return res.status(500).json({ error: 'Database query failed' });
         }
@@ -62,7 +62,7 @@ app.post('/names/create', (req, res) => {
         }
 
         // Insert new name
-        connection.query('INSERT INTO nameList (name) VALUES (?)', [req.body['name']], (err, results) => {
+        connection.query('INSERT INTO Members (name) VALUES (?)', [req.body['name']], (err, results) => {
             if (err) {
                 return res.status(500).json({ error: 'Failed to insert name' });
             }
@@ -74,7 +74,7 @@ app.post('/names/create', (req, res) => {
 // Endpoint to delete a name
 app.post('/names/delete', (req, res) => {
     console.log('delete req: ', req.body)
-    connection.query('DELETE FROM nameList WHERE id = ?', [req.body['id']], (err, results) => {
+    connection.query('DELETE FROM Members WHERE id = ?', [req.body['id']], (err, results) => {
         if (err) {
             return res.status(500).json({ error: 'Oh, Something wrong...(500)' });
         }
