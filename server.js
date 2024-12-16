@@ -28,7 +28,7 @@ connection.connect(err => {
     console.log('Connected to the MySQL database');
 });
 
-app.get('/', async(req, res) => {
+app.get('/', (req, res) => {
     const currentDate = new Date();
 
     const day = currentDate.getDate(), 
@@ -43,8 +43,10 @@ app.get('/', async(req, res) => {
 app.get('/names', (req, res) => {
     connection.query('SELECT * FROM Members ORDER BY name;', (err, results) => {
         if (err) {
+            console.log('Error getting member names, ', err)
             return res.status(500).json({ error: 'Database query failed' });
         }
+        console.log('Got member names from database, ')
         res.json(results);
     });
 });
@@ -55,7 +57,7 @@ app.post('/names/create', (req, res) => {
     // Check for duplicates
     connection.query('SELECT * FROM Members WHERE name = ?', [req.body['name']], (err, results) => {
         if (err) {
-            console.log('Insert Database query failed' ,err)
+            console.log('Insert Database query failed ' ,err)
             return res.status(500).json({ error: 'Database query failed' });
         }
         if (results.length > 0) {
@@ -66,10 +68,10 @@ app.post('/names/create', (req, res) => {
         // Insert new name
         connection.query('INSERT INTO Members (name) VALUES (?)', [req.body['name']], (err, results) => {
             if (err) {
-                console.log('Failed to insert name', err)
+                console.log('Failed to insert name ', err)
                 return res.status(500).json({ error: 'Failed to insert name' });
             }
-            res.status(201).json({ message: 'Name created successfully', id: results.insertId });
+            res.status(201).json({ message: 'Name created successfully ', id: results.insertId });
         });
     });
 });
@@ -84,7 +86,7 @@ app.post('/names/delete', (req, res) => {
         if (results.affectedRows === 0) {
             return res.status(404).json({ error: 'Hey, 用家不存在' });
         }
-        console.log('delete req ' + req.body['id'] + 'success' + results.affectedRows )
+        console.log('delete req ' + req.body['id'] + ' success, affecting row(s) ' + results.affectedRows )
         res.json({ message: '得咗！用家已被刪除' });
     });
 });
