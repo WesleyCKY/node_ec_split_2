@@ -55,15 +55,18 @@ app.post('/names/create', (req, res) => {
     // Check for duplicates
     connection.query('SELECT * FROM Members WHERE name = ?', [req.body['name']], (err, results) => {
         if (err) {
+            console.log('Insert Database query failed' ,err)
             return res.status(500).json({ error: 'Database query failed' });
         }
         if (results.length > 0) {
+            console.log('Insert Database failed, record exist')
             return res.status(400).json({ error: 'Name already exists' });
         }
 
         // Insert new name
         connection.query('INSERT INTO Members (name) VALUES (?)', [req.body['name']], (err, results) => {
             if (err) {
+                console.log('Failed to insert name', err)
                 return res.status(500).json({ error: 'Failed to insert name' });
             }
             res.status(201).json({ message: 'Name created successfully', id: results.insertId });
@@ -81,6 +84,7 @@ app.post('/names/delete', (req, res) => {
         if (results.affectedRows === 0) {
             return res.status(404).json({ error: 'Hey, 用家不存在' });
         }
+        console.log('delete req ' + req.body['id'] + 'success' + results.affectedRows )
         res.json({ message: '得咗！用家已被刪除' });
     });
 });
