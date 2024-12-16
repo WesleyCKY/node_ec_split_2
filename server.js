@@ -10,6 +10,15 @@ const PORT = process.env.PORT || 80;
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+const getDate = () => {
+    const currentDate = new Date();
+    const day = currentDate.getDate(), 
+          month = currentDate.getMonth() + 1,
+          year = currentDate.getFullYear(); 
+
+    return `${day}/${month}/${year} : `;
+}
+
 // Create a MySQL connection
 const connection = mysql.createConnection({
     host: config.db.host,
@@ -22,20 +31,14 @@ const connection = mysql.createConnection({
 // Connect to the database
 connection.connect(err => {
     if (err) {
-        console.error('Error connecting to the database:', err);
+        console.error(getDate, 'Error connecting to the database:', err);
         return;
     }
-    console.log('Connected to the MySQL database');
+    console.log(getDate, 'Connected to the MySQL database');
 });
 
 app.get('/', (req, res) => {
-    const currentDate = new Date();
-
-    const day = currentDate.getDate(), 
-          month = currentDate.getMonth() + 1,
-          year = currentDate.getFullYear(); 
-    
-    console.log(`${day}/${month}/${year}`, 'new access to index.html');
+    console.log(getDate, 'new access to index.html');
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
@@ -43,10 +46,10 @@ app.get('/', (req, res) => {
 app.get('/names', (req, res) => {
     connection.query('SELECT * FROM Members ORDER BY name;', (err, results) => {
         if (err) {
-            console.log('Error getting member names, ', err)
+            console.log(getDate ,'Error getting member names, ', err)
             return res.status(500).json({ error: 'Database query failed' });
         }
-        console.log('Got member names from database, ')
+        console.log(getDate, 'Got member names from database')
         res.json(results);
     });
 });
@@ -57,18 +60,18 @@ app.post('/names/create', (req, res) => {
     // Check for duplicates
     connection.query('SELECT * FROM Members WHERE name = ?', [req.body['name']], (err, results) => {
         if (err) {
-            console.log('Insert Database query failed ' ,err)
+            console.log(getDate, 'Insert Database query failed ' ,err)
             return res.status(500).json({ error: 'Database query failed' });
         }
         if (results.length > 0) {
-            console.log('Insert Database failed, record exist')
+            console.log(getDate, 'Insert Database failed, record exist')
             return res.status(400).json({ error: 'Name already exists' });
         }
 
         // Insert new name
         connection.query('INSERT INTO Members (name) VALUES (?)', [req.body['name']], (err, results) => {
             if (err) {
-                console.log('Failed to insert name ', err)
+                console.log(getDate, 'Failed to insert name ', err)
                 return res.status(500).json({ error: 'Failed to insert name' });
             }
             res.status(201).json({ message: 'Name created successfully ', id: results.insertId });
@@ -86,12 +89,12 @@ app.post('/names/delete', (req, res) => {
         if (results.affectedRows === 0) {
             return res.status(404).json({ error: 'Hey, 用家不存在' });
         }
-        console.log('delete req ' + req.body['id'] + ' success, affecting row(s) ' + results.affectedRows )
+        console.log(getDate, 'delete req ' + req.body['id'] + ' success, affecting row(s) ' + results.affectedRows )
         res.json({ message: '得咗！用家已被刪除' });
     });
 });
 
 // Start the server
 app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+    console.log(getDate, `Server is running on http://localhost:${PORT}`);
 });
