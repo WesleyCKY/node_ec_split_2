@@ -12,9 +12,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 const getDate = () => {
     const currentDate = new Date();
-    const day = currentDate.getDate(), 
-          month = currentDate.getMonth() + 1,
-          year = currentDate.getFullYear(); 
+    const day = String(currentDate.getDate()).padStart(2, '0');
+    const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+    const year = currentDate.getFullYear(); 
 
     return `${day}/${month}/${year} : `;
 }
