@@ -9,43 +9,37 @@ let payer = "";
 function addParticipants() {
     const apiUrl = '/names'; // Replace with your API endpoint
     const ms = document.getElementById("ms");
-    fetch(apiUrl).then(d=>d.json()).then(d=>{
-        ms.innerHTML = 
-          d.map(t=>'<option value="'+t.name+'">'+t.name+'</option>');
-        ms.loadOptions();
-      })
+    const payerSelect = document.getElementById("payer");
+    
     fetch(apiUrl)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
-        })
-        .then(data => {
-            // Extract names from the API data
-            const allParticipants = data.map(participant => participant.name);
-
-            // Clear existing options in the payer select
-            const payerSelect = document.getElementById("payer");
-            // const participantSelect = document.getElementById("ms");
-            payerSelect.innerHTML = "";
-            
-            allParticipants.forEach(participant => {
-                const option = document.createElement("option");
-                option.value = participant;
-                option.textContent = participant;
-                payerSelect.appendChild(option);
-            });
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        // Populate the "ms" select element
+        ms.innerHTML = data.map(t => `<option value="${t.name}">${t.name}</option>`).join('');
         
-            // Show payer input
-            document.getElementById("participants-input").style.display = "block";
-            document.getElementById("payer-input").style.display = "block";
-            showMessage("參與者已加入！");
-        })
-        .catch(error => {
-            console.error('There was a problem with the fetch operation:', error);
-            showMessage("無法獲取參與者資料！", "error");
+        // Populate the "payer" select element
+        payerSelect.innerHTML = "";
+        data.forEach(participant => {
+            const option = document.createElement("option");
+            option.value = participant.name;
+            option.textContent = participant.name;
+            payerSelect.appendChild(option);
         });
+
+        // Show payer input
+        document.getElementById("participants-input").style.display = "block";
+        document.getElementById("payer-input").style.display = "block";
+        showMessage("參與者已加入！");
+    })
+    .catch(error => {
+        console.error('There was a problem with the fetch operation:', error);
+        showMessage("無法獲取參與者資料！", "error");
+    });
 }
 
 // 設置付款

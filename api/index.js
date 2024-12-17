@@ -16,7 +16,9 @@ const connection = mysql.createConnection({
     port: config.db.port,
     user: config.db.user,
     password: config.db.password,
-    database: config.db.database
+    database: config.db.database,
+    keepAliveInitialDelay: 10000, // 0 by default.
+    enableKeepAlive: true, // false by default.
 });
 
 // Connect to the database
