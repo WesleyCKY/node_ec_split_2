@@ -16,15 +16,18 @@ function addParticipants() {
         if (!response.ok) {
             throw new Error('Network response was not ok');
         }
-        return response.json();
+        return response;
     })
-    .then(data => {
-        // Populate the "ms" select element
-        ms.innerHTML = data.map(t => `<option value="${t.name}">${t.name}</option>`).join('');
-        
+    .then(response => response.json()).then(response=>{
+        ms.innerHTML = 
+        response.map(t=>'<option value="'+t.name+'">'+t.name+'</option>');
+        ms.loadOptions();
+        return response;
+    })
+    .then(response => {
         // Populate the "payer" select element
         payerSelect.innerHTML = "";
-        data.forEach(participant => {
+        response.forEach(participant => {
             const option = document.createElement("option");
             option.value = participant.name;
             option.textContent = participant.name;
