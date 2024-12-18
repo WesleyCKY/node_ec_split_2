@@ -74,6 +74,13 @@ th, td {
   border-radius: 5px;
   display: none;
   font-size: 14px;
+  width: calc(100% - 20px);
+  position: fixed;  /* Fixes the position relative to the viewport */
+  bottom: 0;       /* Positions the element at the bottom */
+  left: 0;         /* Aligns the element to the left */
+  padding: 10px;   /* Padding around the content */
+  text-align: center; /* Center the text */
+  z-index: 1000;   /* Ensures the element is above other content */
 }
 .success {
   background-color: #d4edda;
