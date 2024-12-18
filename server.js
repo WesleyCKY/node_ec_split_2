@@ -24,22 +24,22 @@ function getDate(date) {
     return `${currentTime}, ${day}, ${month} ${dateNumber}, ${year}`;
   }
 
-// Create a MySQL connection
-const connection = mysql.createConnection({
+const pool = mysql.createPool({
+    connectionLimit: 10, // Adjust the limit based on your needs
     host: config.db.host,
     port: config.db.port,
     user: config.db.user,
     password: config.db.password,
-    database: config.db.database
+    database: config.db.database,
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0
 });
 
-// Connect to the database
-connection.connect(err => {
-    if (err) {
-        console.error(getDate(new Date()), 'Error connecting to the database:', err);
-        return;
-    }
-    console.log(getDate(new Date()), 'Connected to the MySQL database');
+
+
+pool.on('error', (err) => {
+    console.error(getDate(new Date()), 'MySQL Pool Error:', err);
 });
 
 app.get('/', (req, res) => {
@@ -49,12 +49,12 @@ app.get('/', (req, res) => {
 
 // Endpoint to get all names
 app.get('/names', (req, res) => {
-    connection.query('SELECT * FROM Members ORDER BY name;', (err, results) => {
+    pool.query('SELECT * FROM Members ORDER BY name;', (err, results) => {
         if (err) {
-            console.log(getDate(new Date()) ,'Error getting member names, ', err)
+            console.log(getDate(new Date()), 'Error getting member names, ', err);
             return res.status(500).json({ error: 'Database query failed' });
         }
-        console.log(getDate(new Date()), 'Got member names from database')
+        console.log(getDate(new Date()), 'Got member names from database');
         res.json(results);
     });
 });
@@ -63,7 +63,7 @@ app.get('/names', (req, res) => {
 app.post('/names/create', (req, res) => {
     console.log('create req: ', req.body)
     // Check for duplicates
-    connection.query('SELECT * FROM Members WHERE name = ?', [req.body['name']], (err, results) => {
+    pool.query('SELECT * FROM Members WHERE name = ?', [req.body['name']], (err, results) => {
         if (err) {
             console.log(getDate(new Date()), 'Insert Database query failed ' ,err)
             return res.status(500).json({ error: 'Database query failed' });
@@ -74,7 +74,7 @@ app.post('/names/create', (req, res) => {
         }
 
         // Insert new name
-        connection.query('INSERT INTO Members (name) VALUES (?)', [req.body['name']], (err, results) => {
+        pool.query('INSERT INTO Members (name) VALUES (?)', [req.body['name']], (err, results) => {
             if (err) {
                 console.log(getDate(new Date()), 'Failed to insert name ', err)
                 return res.status(500).json({ error: 'Failed to insert name' });
@@ -87,7 +87,7 @@ app.post('/names/create', (req, res) => {
 // Endpoint to delete a name
 app.post('/names/delete', (req, res) => {
     console.log('delete req: ', req.body)
-    connection.query('DELETE FROM Members WHERE id = ?', [req.body['id']], (err, results) => {
+    pool.query('DELETE FROM Members WHERE id = ?', [req.body['id']], (err, results) => {
         if (err) {
             return res.status(500).json({ error: 'Oh, Something wrong...(500)' });
         }
