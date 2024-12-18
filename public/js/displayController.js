@@ -17,6 +17,20 @@ window.onload = function() {
 function msOnchange(selectedOptions) {
     console.log(Array.from(selectedOptions).map(x=>x.value??x.text))
     participants = Array.from(selectedOptions).map(x=>x.value??x.text)
+    // update payer option list
+    updatePayerOptions(participants)
+}
+
+function updatePayerOptions(participants) {
+    console.log('updatePayerOptions: ', participants)
+    const payerSelect = document.getElementById("payer");
+    payerSelect.innerHTML = "";
+    participants.forEach(participant => {
+        const option = document.createElement("option");
+        option.value = participant;
+        option.textContent = participant;
+        payerSelect.appendChild(option);
+    });
 }
 
 function showBill() {
