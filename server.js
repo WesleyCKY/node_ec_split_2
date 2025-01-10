@@ -41,19 +41,19 @@ pool.on('error', (err) => {
     console.error(getDate(new Date()), 'MySQL Pool Error:', err);
 });
 
-app.get('/', (res) => {
+app.get('/', (req, res) => {
     console.log(getDate(new Date()), 'new access to index.html');
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // Endpoint to get all names
-app.get('/names', (res) => {
+app.get('/names', (req, res) => {
     pool.query('SELECT * FROM Members ORDER BY name;', (err, results) => {
         if (err) {
             console.log(getDate(new Date()), 'Error getting member names, ', err);
             return res.status(500).json({ error: 'Database query failed' });
         }
-        console.log(getDate(new Date()), 'Got member names from database');
+        console.log(getDate(new Date()), 'Got member names from database', results);
         res.json(results);
     });
 });
@@ -130,7 +130,7 @@ app.post('bill/update', (req, res) => {
     console.log('bill/update')
 })
 
-app.get('bill/get', (res) => {
+app.get('bill/get', (req, res) => {
     console.log('/bill/get')
 }) 
 
