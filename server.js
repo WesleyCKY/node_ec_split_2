@@ -167,9 +167,23 @@ app.post('/bill/create', (req, res) => {
     
 });
 
-// app.post('bill/update', (req, res) => {
-//     console.log('bill/update')
-// })
+app.post('/bill/update_bill_pay_status', (req, res) => {
+    console.log('bill/update', req.body['bill_id'], req.body['member_id'], req.body['status'])
+    var bill_id = req.body['bill_id'];
+    var member_id = req.body['member_id'];
+    var status = req.body['status']
+    var sql = `UPDATE BillMemberRelation 
+                SET settled = ? 
+                WHERE member_id = ? AND bill_id = ?`;
+    pool.execute(sql, [status, member_id, bill_id], (error, results) => {
+        if(error){
+            return res.status(500).json({"error": error})
+        }
+        console.log(getDate(new Date()), 'bill status updated');
+        res.status(200).json({"messgae":"update success", "results": results});
+    });
+
+})
 
 app.get('/bill/get', (req, res) => {
     console.log('/bill/get', req.query.bill_id);
