@@ -3,7 +3,6 @@ const path = require('path');
 const mysql = require('mysql2');
 const bodyParser = require('body-parser');
 const config = require('./config');
-const { readSync } = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 80;
@@ -53,7 +52,7 @@ app.get('/names', (req, res) => {
             console.log(getDate(new Date()), 'Error getting member names, ', err);
             return res.status(500).json({ error: 'Database query failed' });
         }
-        console.log(getDate(new Date()), 'Got member names from database', results);
+        console.log(getDate(new Date()), 'Got member names from database', results.length);
         res.json(results);
     });
 });
@@ -122,17 +121,103 @@ app.post('/names/delete', (req, res) => {
     })
 });
 
+// req: team_id, payer_member_id, total_amount, remarks, details
 app.post('/bill/create', (req, res) => {
-    console.log('/bill/create')
-})
+    console.log('/bill/create', req.body['team_id'], req.body['payer_member_id'], req.body['total_amount'], req.body['remarks'], req.body['details'])
+    var team_id = req.body['team_id'];
+    var payer_member_id = req.body['payer_member_id'];
+    var total_amount = req.body['total_amount'];
+    var remarks = req.body['remarks'];
+    var details = req.body['details'];
+    // insert into bill
+    var sql = 'INSERT INTO Bills (team_id, payer_member_id, total_amount, remarks, bill_date) VALUES (?, ?, ?, ?, ?)';
+    pool.execute(sql, [team_id, payer_member_id, total_amount, remarks, new Date()], (err, results)=>{
+        if (err) {
+            console.log(getDate(new Date()), 'Failed to insert Bill ', err)
+            return res.status(500).json({ error: 'Failed to insert Bill'});
+        }
+        console.log(getDate(new Date()), results)
+        var bill_id = results['insertId']
+        sql = 'INSERT INTO BillMemberRelation (bill_id, member_id, amount, settled, lastModifiedDate, createdDate) VALUES (?, ?, ?, ?, ?, ?)';
+        // get the bill_id
+        // loop from details array, check if member id == payer_member_id
+        const promises = Object.entries(details).map(([member_id, amount]) => {
+            return new Promise((resolve, reject) => {
+                var settled = (payer_member_id == member_id) ? true : false; 
+                pool.execute(sql, [bill_id, member_id, amount, settled, new Date(), new Date()], (error, results) => {
+                    if (error) {
+                        console.log(getDate(new Date()), error)
+                        return reject(error);
+                    }
+                    resolve(results);
+                });
+            });
+        });
 
-app.post('bill/update', (req, res) => {
-    console.log('bill/update')
-})
+        Promise.all(promises).then(results => {
+            console.log('Rows inserted:', results.insertId);
+        }).catch(error => {
+            console.error('Error inserting rows:', error);
+        })
 
-app.get('bill/get', (req, res) => {
-    console.log('/bill/get')
-}) 
+        return res.status(200).json({message: 'bill created successfully', result: results})
+    })
+    // insert into bill member relation
+
+    
+});
+
+// app.post('bill/update', (req, res) => {
+//     console.log('bill/update')
+// })
+
+app.get('/bill/get', (req, res) => {
+    console.log('/bill/get', req.query.bill_id);
+    var bill_id = req.query.bill_id;
+    const sql = `
+        SELECT 
+            b.bill_id,
+            b.bill_date,
+            b.total_amount,
+            b.remarks,
+            bm.bill_member_id,
+            bm.member_id,
+            m.name AS member_name,
+            bm.amount,
+            bm.settled,
+            bm.lastModifiedDate,
+            bm.createdDate
+        FROM 
+            Bills b
+        JOIN 
+            BillMemberRelation bm ON b.bill_id = bm.bill_id
+        JOIN 
+            Members m ON bm.member_id = m.id
+        WHERE 
+            b.bill_id = ?;
+    `;
+
+    pool.query(sql, [bill_id], (error, results) => {
+        if (error) {
+            return callback(error, null);
+        }
+        const bill_details = results.map(row => ({
+            billId: row.bill_id,
+            billDate: row.bill_date,
+            totalAmount: row.total_amount,
+            remarks: row.remarks,
+            billMemberId: row.bill_member_id,
+            memberId: row.member_id,
+            memberName: row.member_name,
+            amount: row.amount,
+            settled: row.settled,
+            lastModifiedDate: row.lastModifiedDate,
+            createdDate: row.createdDate
+        }));
+
+        res.status(200).json({"result": results.length, "bill": bill_details})
+    })
+});
 
 // Start the server
 app.listen(PORT, () => {
