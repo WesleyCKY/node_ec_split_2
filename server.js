@@ -3,6 +3,7 @@ const path = require('path');
 const mysql = require('mysql2');
 const bodyParser = require('body-parser');
 const config = require('./config');
+const { readSync } = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 80;
@@ -36,19 +37,17 @@ const pool = mysql.createPool({
     queueLimit: 0
 });
 
-
-
 pool.on('error', (err) => {
     console.error(getDate(new Date()), 'MySQL Pool Error:', err);
 });
 
-app.get('/', (req, res) => {
+app.get('/', (res) => {
     console.log(getDate(new Date()), 'new access to index.html');
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // Endpoint to get all names
-app.get('/names', (req, res) => {
+app.get('/names', (res) => {
     pool.query('SELECT * FROM Members ORDER BY name;', (err, results) => {
         if (err) {
             console.log(getDate(new Date()), 'Error getting member names, ', err);
@@ -62,6 +61,7 @@ app.get('/names', (req, res) => {
 // Endpoint to create a new name
 app.post('/names/create', (req, res) => {
     console.log('create req: ', req.body)
+    var insertedId = null
     // Check for duplicates
     pool.query('SELECT * FROM Members WHERE name = ?', [req.body['name']], (err, results) => {
         if (err) {
@@ -79,25 +79,60 @@ app.post('/names/create', (req, res) => {
                 console.log(getDate(new Date()), 'Failed to insert name ', err)
                 return res.status(500).json({ error: 'Failed to insert name' });
             }
-            res.status(201).json({ message: 'Name created successfully ', id: results.insertId });
-        });
+            console.log(getDate(new Date()), "insert id: ", results.insertId)
+            insertedId = results.insertId
+            if (insertedId == null | undefined) {
+                return res.status(500).json({ error: 'Failed to insert name' });
+            }
+
+            pool.query('INSERT INTO TeamMembersRelation (team_id, id, join_date) VALUES (0, ' +  insertedId + ', NOW() )', (err, results) => {
+                if (err) {
+                    console.log(getDate(new Date()), 'Failed to insert TeamMemberRelation  ', err)
+                    return res.status(500).json({ error: 'Failed to insert TeamMemberRelation'});
+                }
+            })
+        })
+
+        return res.status(201).json({ message: 'Name created successfully ', id: insertedId });
+        
     });
 });
 
 // Endpoint to delete a name
 app.post('/names/delete', (req, res) => {
     console.log('delete req: ', req.body)
-    pool.query('DELETE FROM Members WHERE id = ?', [req.body['id']], (err, results) => {
+    pool.query('DELETE FROM TeamMembersRelation where id = ?', [req.body['id']], (err, results) => {
         if (err) {
-            return res.status(500).json({ error: 'Oh, Something wrong...(500)' });
+            return res.status(500).json({ error: 'Oh, Something wrong...(500) ', err });
         }
         if (results.affectedRows === 0) {
-            return res.status(404).json({ error: 'Hey, 用家不存在' });
+            return res.status(404).json({ error: 'Hey, TeamMembersRelation 用家不存在' });
         }
-        console.log(getDate(new Date()), 'delete req ' + req.body['id'] + ' success, affecting row(s) ' + results.affectedRows )
-        res.json({ message: '得咗！用家已被刪除' });
-    });
+
+        pool.query('DELETE FROM Members WHERE id = ?', [req.body['id']], (err, results) => {
+            if (err) {
+                return res.status(500).json({ error: 'Oh, Something wrong...(500) ', err });
+            }
+            if (results.affectedRows === 0) {
+                return res.status(404).json({ error: 'Hey, Members 用家不存在' });
+            }
+            console.log(getDate(new Date()), 'delete req ' + req.body['id'] + ' success, affecting row(s) ' + results.affectedRows )
+            res.json({ message: '得咗！用家已被刪除' });
+        });
+    })
 });
+
+app.post('/bill/create', (req, res) => {
+    console.log('/bill/create')
+})
+
+app.post('bill/update', (req, res) => {
+    console.log('bill/update')
+})
+
+app.get('bill/get', (res) => {
+    console.log('/bill/get')
+}) 
 
 // Start the server
 app.listen(PORT, () => {

@@ -47,6 +47,7 @@ async function submitCreate() {
 
     // Close the modal
     $('#nameModal').modal('hide');
+    
 }
 
 async function createUser(name) {
@@ -59,17 +60,17 @@ async function createUser(name) {
               },
             body: JSON.stringify({'name': name})
         });
-        const result = await response.json();
+        await response.json().then((result) => {
+            if (result.error) {
+                showMessage(result.error, "error")
+            } 
+            if (result.message) {
+                showMessage(result.message)
+                reloadUser()
+            }
+        });
 
-        if (result) {
-            console.log(result.message)
-            await reloadUser(result)
-        } 
-        else {
-            console.error('Error creating user:', result.statusText);
-            showMessage(result.statusText);
-            document.getElementById('updateStatus').innerText = 'Error creating user.';
-        }
+        
     } catch {
         console.error('Error:', error);
         document.getElementById('updateStatus').innerText = 'Error creating user.';
